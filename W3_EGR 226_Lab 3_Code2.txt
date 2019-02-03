@@ -1,7 +1,7 @@
 
 /* Title : EGR 226 LED Lab 2/2
  * Version: Winter 2019
- * Author: Chris Kyser & Xue Hua 
+ * Author: Xue Hua 
  *
  * Info:
  * timer function retrieved from textbook code 5.3
