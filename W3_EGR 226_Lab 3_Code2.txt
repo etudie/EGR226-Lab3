@@ -1,0 +1,100 @@
+
+/* Title : EGR 226 LED Lab 2/2
+ * Version: Winter 2019
+ * Author: Chris Kyser & Xue Hua 
+ *
+ * Info:
+ * timer function retrieved from textbook code 5.3
+ * 
+ * --------------
+ * LED      PORT
+ * --------------
+ * RED      P2.0
+ * GREEN    P2.1
+ * BLUE     P2.2
+ *
+ * - Anything ORed with 1 is 1
+ * - Anything AND with 1 is itself
+ * - Used XOR to toggle
+ */
+
+#include "msp.h"
+
+void buttonConfig();
+void LEDConfig();
+void switchbounce();
+void delayMs();
+
+int main(void) {
+
+    // Configure port P1, P2
+    buttonConfig();
+    LEDConfig();
+
+
+    while (1) {
+
+        // Keep current state until button one is triggered
+        if (P1->IN & BIT1){
+            P2->OUT |= 0;
+
+        // Toggle between respective LED
+        }else{
+               /* if COUNTFLAG is set */
+            if (P2->OUT & BIT0){
+                P2->OUT ^= (BIT0|BIT1);             // RED --> GREEN
+            }
+            else if(P2->OUT & BIT1){
+                P2->OUT ^= (BIT1|BIT2);             // GREEN --> BLUE
+            }
+            else if(P2->OUT & BIT2){
+                P2->OUT ^= (BIT2|BIT0);             // BLUE --> RED
+            }
+            else{
+                P2->OUT |= BIT0;                    // OFF --> RED
+            }
+
+            switchbounce();                         // delay function
+            delayMs();                              // set timer
+            while((P1->IN & BIT1)==0){              // while button is depressed
+                if(SysTick->CTRL & 0x10000){        // when timer reaches one second
+                    break;
+                }else{
+                    P2->OUT &=(BIT2|BIT1|BIT0);
+                }
+
+            }
+
+        }
+    }
+}
+
+/* delay function */
+void delayMs() {
+    /* Configure SysTick */
+    SysTick->LOAD = 3000000-1;  /* reload reg. with 3,000,000-1 */
+       SysTick->VAL = 0;           /* clear current value register */
+       SysTick->CTRL = 5;          /* enable it, no interrupt, use master clock */
+}
+
+void switchbounce(){
+    __delay_cycles(1000) ;
+}
+
+/* To initialize and configure the button at P1 */
+void buttonConfig(){
+    P1->SEL1 &= ~BIT1;         /* configure P1.1 as simple I/O */
+    P1->SEL0 &= ~BIT1;
+    P1->DIR &= ~BIT1;          /* P1.1 set as input */
+    P1->REN |= BIT1;           /* P1.1 pull resistor enabled */
+    P1->OUT |= BIT1;           /* Pull up/down is selected by P1->OUT */
+}
+
+/* To initialize and configure the RGB LED at P2 */
+void LEDConfig(){
+    P2->SEL1 &= ~(BIT2|BIT1|BIT0);       /* configure P2.2-P2.0 as simple I/O */
+    P2->SEL0 &= ~(BIT2|BIT1|BIT0);
+    P2->DIR |= (BIT2|BIT1|BIT0);         /* P2.2-2.0 set as output */
+    P2->OUT &= ~(BIT2|BIT1|BIT0);
+}
+
